@@ -1,7 +1,7 @@
-// animation 001
+// apis
 
-let geodata;
-let treeData;
+let apidata;
+let earthquakes;
 
 let currentYear;
 
@@ -13,65 +13,70 @@ let bounds = {
 };
 
 function preload() {
-  geodata = loadJSON("lucerne-trees.json");
+  // apiData = loadJSON(
+  //   "https://api.logair.unige.ch/v1/service/device/latest?device_id=LACF-004&latest=8000"
+  // );
+  // let url =
+  //   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/" +
+  //   "summary/all_day.geojson";
+  // earthquakes = loadJSON(url);
 }
 
 function setup() {
   createCanvas(900, 650);
 
-  treeData = geodata.features;
-  console.log(treeData.length);
+  // let url =
+  //   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/" +
+  //   "summary/all_day.geojson";
 
-  // filter out trees with no PFLANZJAHR
-  treeData = treeData.filter(function (d) {
-    return d.properties.PFLANZJAHR != null;
-  });
-  console.log(treeData.length);
+  let url =
+    "https://api.logair.unige.ch/v1/service/device/latest?device_id=LACF-004&latest=1";
 
-  // filter out obviously invalid year data (12)
-  treeData = treeData.filter(function (d) {
-    return d.properties.PFLANZJAHR > 1000;
-  });
+  // d3.json(url)
+  //   .then((json) => {
+  //     console.log("json", json);
+  //   })
+  //   .catch((error) => {
+  //     console.error("Error loading the data");
+  //   });
 
-  // get the start year for the animation, this is the earliest year in the data
-  let startYear = d3.min(treeData, function (d) {
-    return d.properties.PFLANZJAHR;
-  });
+  // loadJSON(
+  //   url,
+  //   function (json) {
+  //     console.log("json", json);
+  //   },
+  //   function (error) {
+  //     console.log("error", JSON.stringify(error));
+  //   }
+  // );
 
-  console.log("startYear", startYear);
+  var headers = {
+    "Access-Control-Allow-Origin": "*",
+  };
 
-  currentYear = startYear;
+  fetch(url, {
+    method: "GET",
+    mode: "cors",
+    headers: headers,
+  })
+    .then(function (response) {
+      if (response.status !== 200) {
+        console.log(
+          "Looks like there was a problem. Status Code: " + response.status
+        );
+        return;
+      }
 
-  frameRate(30);
+      // Examine the text in the response
+      response.json().then(function (data) {
+        console.log(data);
+      });
+    })
+    .catch(function (err) {
+      console.log("Fetch Error :-S", err);
+    });
+
+  noLoop();
 }
 
-function draw() {
-  background(255);
-
-  noStroke();
-  fill(0);
-  text(currentYear, 50, 50);
-
-  drawTrees();
-
-  currentYear += 0.5;
-}
-
-function drawTrees() {
-  for (let i = 0; i < treeData.length; i++) {
-    let treeObject = treeData[i];
-
-    if (treeObject.properties.PFLANZJAHR < currentYear) {
-      let coordinates = treeObject.geometry.coordinates;
-      let lat = coordinates[1];
-      let lon = coordinates[0];
-
-      let x = map(lon, bounds.left, bounds.right, 0, width);
-      let y = map(lat, bounds.top, bounds.bottom, 0, height);
-
-      fill(0);
-      noStroke();
-      ellipse(x, y, 3, 3);
-    }
-  }
-}
+function draw() {}
